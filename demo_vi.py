@@ -19,7 +19,7 @@ import pdb
 class Object():
     pass
 opt = Object()
-opt.crop_size = 512
+opt.crop_size = 256
 opt.double_size = True if opt.crop_size == 512 else False
 ########## DAVIS
 DAVIS_ROOT = './DAVIS_demo'
@@ -82,14 +82,15 @@ pre = 30
 
 with torch.no_grad():
     for seq, (inputs, masks, info) in enumerate(DTloader):
-
         idx = torch.LongTensor([i for i in range(pre-1,-1,-1)])
         pre_inputs = inputs[:,:,:pre].index_select(2,idx)
         pre_masks = masks[:,:,:pre].index_select(2,idx)
         inputs = torch.cat((pre_inputs, inputs),2)
         masks = torch.cat((pre_masks, masks),2)
+        print("HERE_2")
 
         bs = inputs.size(0)
+
         num_frames = inputs.size(2)
         seq_name = info['name'][0]
 
@@ -111,10 +112,11 @@ with torch.no_grad():
 
         lstm_state = None
 
+        print("num_frames: ",num_frames)
         for t in range(num_frames):
             masked_inputs_ = []
             masks_ = []        
-
+            print("    t: ",t)
             if t < 2*ts:
                 masked_inputs_.append(masked_inputs[0,:,abs(t-2*ts)])
                 masked_inputs_.append(masked_inputs[0,:,abs(t-1*ts)])
@@ -169,6 +171,7 @@ with torch.no_grad():
                 lstm_state = repackage_hidden(lstm_state)
 
             total_time += end
+            print("    t_f: ",t)
             if t>pre:
                 print('{}th frame of {} is being processed'.format(t-pre, seq_name))
                 out_frame = to_img(outputs)  
